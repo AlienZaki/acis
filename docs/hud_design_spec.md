@@ -60,6 +60,7 @@ When a cue is detected, ACIS speaks a brief audio summary through the glasses' o
 
 The designer should consider how audio delivery changes the user experience:
 
+- **Mic source matters for audio quality:** Bluetooth A2DP (high-quality output) and HFP (glasses mic) are mutually exclusive. If the user selects glasses mic, cue audio degrades to 8 kHz mono. The settings UI should surface this tradeoff — default to phone mic.
 - **Cue verbosity:** Should Suggestions be spoken in full? Or just the title, with the full text available on phone? Consider a "Brief" vs "Full" audio mode setting.
 - **Interruption model:** If a cue arrives while the user is actively speaking, it should not be spoken over them. ACIS should detect voice activity before playing. This is a product decision the designer should surface in settings.
 - **Volume and voice:** The text-to-speech voice and volume should be configurable. Consider whether cues use the device TTS voice or a custom one.
@@ -69,7 +70,7 @@ The designer should consider how audio delivery changes the user experience:
 
 ## Camera (Future Use)
 
-The Meta Ray-Ban camera is available to apps via the Meta Platform SDK. ACIS v1 does **not** use the camera. In Phase 2, camera input could enable:
+The Meta Ray-Ban camera is available to apps via the Wearables DAT (Device Access Toolkit). ACIS v1 does **not** use the camera. In Phase 2, camera input could enable:
 - Visual context for cues (e.g. reading a whiteboard and surfacing a Concept cue for an equation on it)
 - Scene-aware suggestions (e.g. detecting a business card and generating a Bio cue)
 
@@ -79,7 +80,7 @@ This is out of scope for the current design. Do not design for it. Note it exist
 
 ## Meta View App Integration
 
-ACIS requires the Meta View companion app to be installed and the glasses to be paired. ACIS communicates with the glasses via Bluetooth through the Meta Platform SDK for Wearables.
+ACIS requires the Meta AI companion app to be installed and the glasses to be paired. Audio cues are delivered via Bluetooth A2DP through the Wearables Device Access Toolkit (DAT). The glasses mic (HFP) is not used by default — see the A2DP/HFP constraint in the RFC §6.
 
 The designer does not need to design the Meta View pairing flow — it is the user's responsibility to pair glasses before using ACIS. ACIS should detect whether glasses are paired and show an appropriate state if not.
 
