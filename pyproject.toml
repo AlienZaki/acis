@@ -1,0 +1,70 @@
+[project]
+name = "acis"
+version = "0.1.0"
+description = "ACIS — Ambient Conversation Intelligence System; audio cue delivery to Meta Ray-Ban via A2DP"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "websockets>=12",
+    "httpx>=0.27",
+    "sqlmodel>=0.0.21",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+audio = ["sounddevice>=0.4", "numpy>=1.26"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.15",
+    "ty>=0.0.1",
+    "pre-commit>=4.0",
+    "respx>=0.21",
+]
+
+[project.scripts]
+acis      = "acis.cli:main"
+acis-serve = "acis.infrastructure.input_interfaces.ws.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/acis"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths  = ["tests"]
+asyncio_mode = "auto"
+addopts    = "--strict-markers -ra"
+markers = [
+    "integration: hits live external APIs (Mistral) — needs MISTRAL_API_KEY",
+    "smoke: end-to-end smoke tests against a live WS server and real Mistral API; needs MISTRAL_API_KEY",
+]
+
+# ── Lint / format (ruff) ──
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv", "app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = ["A", "B", "C4", "E", "F", "I", "N", "PERF", "PIE", "PT", "RET", "RUF", "SIM", "UP", "W"]
+ignore = ["A003", "RUF006", "SIM108", "RUF003"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["acis"]
+combine-as-imports = true
+split-on-trailing-comma = false
+
+# ── Type checker (ty) ──
+[tool.ty.environment]
+python-version = "3.11"
+python = ".venv"

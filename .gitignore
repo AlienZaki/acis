@@ -1,0 +1,21 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.ty/
+*.db
+
+# React Native / Expo
+app/node_modules/
+app/.expo/
+app/ios/build/
+app/android/build/
+app/ios/Pods/

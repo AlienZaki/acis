@@ -1,0 +1,58 @@
+name: Build iOS (EAS)
+
+# Triggers:
+#   - Push to main that touches app/ or this workflow file
+#   - Manual trigger (workflow_dispatch) — useful for one-off builds
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/build-ios.yml"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "EAS build profile"
+        required: false
+        default: "preview"
+        type: choice
+        options: [preview, production]
+
+jobs:
+  build-ios:
+    name: EAS Build — iOS ${{ inputs.profile || 'preview' }}
+    runs-on: ubuntu-latest  # EAS runs the actual Xcode build in Expo's cloud
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: app
+
+      # expo/expo-github-action installs eas-cli and authenticates with EXPO_TOKEN.
+      # Set EXPO_TOKEN in: GitHub repo → Settings → Secrets → Actions.
+      # Get the token at: https://expo.dev/accounts/[you]/settings/access-tokens
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build (preview — internal distribution)
+        run: eas build --platform ios --profile ${{ inputs.profile || 'preview' }} --non-interactive
+        working-directory: app
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # After this step EAS prints a QR code / install link.
+      # Open it on your iPhone to install directly (no TestFlight needed for preview).
+      # Your device UDID must be registered in Expo first — run `eas device:create` locally.

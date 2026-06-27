@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "ACIS",
+    "slug": "acis",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.alienzaki.acis",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "ACIS uses the microphone to capture and transcribe conversation audio.",
+        "NSSpeechRecognitionUsageDescription": "ACIS uses speech recognition to transcribe conversations."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.alienzaki.acis",
+      "permissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "plugins": [
+      "expo-speech"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
