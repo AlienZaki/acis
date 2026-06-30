@@ -41,9 +41,17 @@ class Settings(BaseSettings):
     # Large 3 still the right call for the single end-of-session summary;
     # swap to magistral-small-latest to A/B test reasoning-chain keypoints
     ACIS_SUMMARY_MODEL: str = "mistral-large-latest"
+    # mistral-embed: powers semantic cue dedup (drops paraphrased near-duplicates)
+    ACIS_EMBED_MODEL: str = "mistral-embed"
 
     # ── Pipeline tuning ──
     ACIS_CUE_THRESHOLD_WORDS: int = 50
+    # Cosine threshold above which two same-type cue titles are deemed duplicates.
+    # Tuned to 0.88 against real sessions: merges paraphrases, keeps distinct cues.
+    ACIS_DEDUP_THRESHOLD: float = 0.88
+    # Suggestions are short and templated ("Clarify English workshop plans" vs
+    # "...frequency") and cluster just under 0.88, so they get a lower bar.
+    ACIS_DEDUP_THRESHOLD_SUGGESTION: float = 0.84
 
     # ── Audio capture (CLI / sounddevice mode) ──
     ACIS_AUDIO_SAMPLE_RATE: int = 16000

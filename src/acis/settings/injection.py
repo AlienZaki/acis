@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ..domain.ports import AudioEventBus
 from ..infrastructure.output_adapters.asr.voxtral import VoxtralASR
+from ..infrastructure.output_adapters.embeddings.mistral import MistralEmbedder
 from ..infrastructure.output_adapters.llm.cue_extractor import MistralCueExtractor
 from ..infrastructure.output_adapters.llm.summarizer import MistralSummarizer
 from ..infrastructure.repositories.sqlite import SQLiteSessionRepository
@@ -21,6 +22,7 @@ def build_repository() -> SQLiteSessionRepository:
 def build_services(bus: AudioEventBus):
     """Wire all ports to concrete adapters and return the assembled Services."""
     from ..application.use_cases.extract_cues import ExtractCues
+    from ..application.use_cases.inject_text import InjectText
     from ..application.use_cases.process_chunk import ProcessChunk
     from ..application.use_cases.start_session import StartSession
     from ..application.use_cases.stop_session import StopSession
@@ -33,12 +35,14 @@ def build_services(bus: AudioEventBus):
     key, base = settings.MISTRAL_API_KEY, settings.MISTRAL_BASE_URL
     asr = VoxtralASR(api_key=key, base_url=base, model=settings.ACIS_ASR_MODEL)
     extractor = MistralCueExtractor(api_key=key, base_url=base, model=settings.ACIS_CUE_MODEL)
+    embedder = MistralEmbedder(api_key=key, base_url=base, model=settings.ACIS_EMBED_MODEL)
     summarizer = MistralSummarizer(api_key=key, base_url=base, model=settings.ACIS_SUMMARY_MODEL)
 
     return Services(
         start=StartSession(repo=repo, bus=bus),
         stop=StopSession(repo=repo, summarizer=summarizer, bus=bus),
         process=ProcessChunk(asr=asr, repo=repo, bus=bus),
-        extract=ExtractCues(extractor=extractor, repo=repo, bus=bus),
+        inject=InjectText(repo=repo, bus=bus),
+        extract=ExtractCues(extractor=extractor, embedder=embedder, repo=repo, bus=bus),
         repo=repo,
     )

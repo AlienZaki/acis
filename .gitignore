@@ -13,6 +13,9 @@ htmlcov/
 .ty/
 *.db
 
+# IDE
+.idea/
+
 # React Native / Expo
 app/node_modules/
 app/.expo/

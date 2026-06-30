@@ -83,7 +83,7 @@ async def serve(host: str, port: int, *, services: Services, bus: WebSocketEvent
     async def handler(ws):
         await handle_connection(ws, services=services, bus=bus)
 
-    async with websockets.serve(handler, host, port):
+    async with websockets.serve(handler, host, port, ping_interval=None):
         print(f"acis serve → ws://{host}:{port}", flush=True)
         await asyncio.Future()  # run forever
 

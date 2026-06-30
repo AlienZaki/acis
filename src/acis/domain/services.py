@@ -44,16 +44,61 @@ class TranscriptAccumulator:
 
 @dataclass
 class CueDeduplicator:
-    """Suppresses duplicate cue titles within a rolling window of recently seen titles."""
+    """Suppresses duplicate cue titles for the whole session.
 
-    window: int = 5
+    The rolling extraction window re-reads overlapping transcript on every pass,
+    so the LLM keeps re-deriving the same entities (a speaker's bio, a recurring
+    concept). One ``CueDeduplicator`` lives per session, so remembering every
+    title seen — not just a short window — is both correct and naturally bounded
+    by the session's cue count.
+    """
 
-    _recent: list[str] = field(default_factory=list, init=False, repr=False)
+    _seen: set[str] = field(default_factory=set, init=False, repr=False)
 
     def is_duplicate(self, title: str) -> bool:
-        return title.lower().strip() in self._recent
+        return title.lower().strip() in self._seen
 
     def mark_seen(self, title: str) -> None:
-        self._recent.append(title.lower().strip())
-        if len(self._recent) > self.window:
-            self._recent = self._recent[-self.window :]
+        self._seen.add(title.lower().strip())
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    na = sum(x * x for x in a) ** 0.5
+    nb = sum(x * x for x in b) ** 0.5
+    if na == 0.0 or nb == 0.0:
+        return 0.0
+    return dot / (na * nb)
+
+
+@dataclass
+class SemanticDeduplicator:
+    """Drops cues whose meaning matches one already accepted, per cue type.
+
+    Exact-title dedup misses paraphrases the LLM keeps producing — "How many
+    companies are in the center?" vs "...in the Gründungszentrum?". Here each cue
+    title is embedded and compared (cosine) against titles already accepted for
+    the same cue type; anything at or above the type's threshold is a dup.
+    Compared within type only, so an "answer" never suppresses a "concept".
+
+    Thresholds are per type because the cue types differ in shape (tuned against
+    real sessions): concepts/bios/answers are distinct enough that 0.88 avoids
+    merging "Business Model" with "Business Plan", but suggestions are short and
+    templated ("Clarify English workshop plans" vs "...frequency") and cluster at
+    0.85–0.88, so they need a lower bar to collapse.
+    """
+
+    default_threshold: float = 0.88
+    type_thresholds: dict[str, float] = field(default_factory=dict)
+
+    _vectors: dict[str, list[list[float]]] = field(default_factory=dict, init=False, repr=False)
+
+    def _threshold_for(self, cue_type: str) -> float:
+        return self.type_thresholds.get(cue_type, self.default_threshold)
+
+    def is_duplicate(self, cue_type: str, vector: list[float]) -> bool:
+        threshold = self._threshold_for(cue_type)
+        return any(_cosine(vector, seen) >= threshold for seen in self._vectors.get(cue_type, ()))
+
+    def add(self, cue_type: str, vector: list[float]) -> None:
+        self._vectors.setdefault(cue_type, []).append(vector)

@@ -17,14 +17,21 @@ class VoxtralASR:
     base_url: str = "https://api.mistral.ai/v1"
     model: str = "voxtral-mini-latest"
 
-    async def transcribe(self, wav_bytes: bytes) -> str:
-        """POST WAV bytes to Voxtral; return transcript (empty string on silence)."""
+    async def transcribe(self, wav_bytes: bytes, vocabulary_hints: list[str] | None = None) -> str:
+        """POST WAV bytes to Voxtral; return transcript (empty string on silence).
+
+        vocabulary_hints: domain-specific terms/names to bias recognition toward
+        (passed as Whisper-style prompt to seed the decoder vocabulary).
+        """
+        form: dict = {"model": self.model}
+        if vocabulary_hints:
+            form["prompt"] = ", ".join(vocabulary_hints)
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{self.base_url}/audio/transcriptions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 files={"file": ("audio.wav", wav_bytes, "audio/wav")},
-                data={"model": self.model},
+                data=form,
             )
             response.raise_for_status()
         return response.json().get("text", "").strip()

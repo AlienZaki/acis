@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from .... import protocol as p
 from ....application.session_context import SessionContext
 from ....application.use_cases.extract_cues import ExtractCues
+from ....application.use_cases.inject_text import InjectText
 from ....application.use_cases.process_chunk import ProcessChunk
 from ....application.use_cases.start_session import StartSession
 from ....application.use_cases.stop_session import StopSession
@@ -31,6 +32,7 @@ class Services:
     start: StartSession
     stop: StopSession
     process: ProcessChunk
+    inject: InjectText
     extract: ExtractCues
     repo: SQLiteSessionRepository
 
@@ -79,6 +81,15 @@ async def _audio_chunk(ctx: ConnCtx, svc: Services, msg: p.AudioChunk) -> AsyncI
         await svc.extract.execute(ctx.current)
 
 
+async def _text_line(ctx: ConnCtx, svc: Services, msg: p.TextLine) -> AsyncIterator[BaseModel]:
+    if ctx.current is None:
+        yield p.Error(message="no active session — send session.start first")
+        return
+    should_extract = await svc.inject.execute(ctx.current, msg.text)
+    if should_extract:
+        await svc.extract.execute(ctx.current)
+
+
 async def _ping(ctx: ConnCtx, svc: Services, msg: p.Ping) -> AsyncIterator[BaseModel]:
     yield p.Pong()
 
@@ -88,6 +99,7 @@ HANDLERS = {
     p.SessionStart: _session_start,
     p.SessionStop: _session_stop,
     p.AudioChunk: _audio_chunk,
+    p.TextLine: _text_line,
     p.Ping: _ping,
 }
 

@@ -18,6 +18,12 @@ class ASRPort(Protocol):
     async def transcribe(self, wav_bytes: bytes) -> str: ...
 
 
+class EmbedderPort(Protocol):
+    """Embed short texts into vectors for semantic similarity (cue dedup)."""
+
+    async def embed(self, texts: list[str]) -> list[list[float]]: ...
+
+
 class CueExtractorPort(Protocol):
     """Run 4 parallel LLM calls against rolling transcript; return extracted cues."""
 

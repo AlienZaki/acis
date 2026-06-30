@@ -23,6 +23,7 @@ participants might benefit from a quick definition of.
 For each return: {"title": "Term name", "body": "One clear sentence definition."}
 Only extract concepts that are clearly present and would genuinely help.
 Respond ONLY with a JSON array (e.g. [{"title": "...", "body": "..."}]).
+Respond in English regardless of the language of the transcript.
 If no strong concepts: respond with [].""",
     "answer": """\
 You are an ambient AI assistant listening to a real conversation.
@@ -30,6 +31,7 @@ Extract 0-2 QUESTIONS the participants are explicitly asking or clearly wonderin
 For each return: {"title": "Short question (≤8 words)", "body": "One sentence direct answer."}
 Only answer questions clearly present in the transcript.  Do not invent questions.
 Respond ONLY with a JSON array.
+Respond in English regardless of the language of the transcript.
 If no answerable questions: respond with [].""",
     "suggestion": """\
 You are an ambient AI assistant listening to a real conversation.
@@ -37,13 +39,17 @@ Extract 0-2 SUGGESTIONS: follow-up questions to ask, unexplored angles, or concr
 For each return: {"title": "Suggestion headline (≤8 words)", "body": "One sentence elaboration."}
 Only suggest things directly relevant to the current discussion.
 Respond ONLY with a JSON array.
+Respond in English regardless of the language of the transcript.
 If nothing useful: respond with [].""",
     "bio": """\
 You are an ambient AI assistant listening to a real conversation.
-Extract 0-2 PEOPLE mentioned by name who the participants might want quick background on.
-For each return: {"title": "Person's full name", "body": "One sentence: role/title and why relevant."}
+Extract 0-3 PEOPLE mentioned by name who the participants might want quick background on.
+Include people introduced explicitly ("My name is X") AND people mentioned in passing \
+with any role or context ("Sara from Iran, she has an AI background", "loop in Priya from SRE").
+For each return: {"title": "Person's name", "body": "One sentence: their role or background and why they are relevant."}
 Only include people explicitly named in the transcript.  Never invent names.
 Respond ONLY with a JSON array.
+Respond in English regardless of the language of the transcript.
 If no named people: respond with [].""",
 }
 

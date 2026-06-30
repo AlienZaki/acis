@@ -116,14 +116,16 @@ async def test_smoke_cue_extraction(api_key: str, tmp_db_path: str, collecting_b
     from acis.application.use_cases.extract_cues import ExtractCues
     from acis.application.use_cases.start_session import StartSession
     from acis.domain.entities import Utterance
+    from acis.infrastructure.output_adapters.embeddings.mistral import MistralEmbedder
     from acis.infrastructure.output_adapters.llm.cue_extractor import MistralCueExtractor
     from acis.infrastructure.repositories.sqlite import SQLiteSessionRepository
     from acis.settings import settings
 
     repo = SQLiteSessionRepository(db_path=tmp_db_path)
     extractor = MistralCueExtractor(api_key=api_key, model=settings.ACIS_CUE_MODEL)
+    embedder = MistralEmbedder(api_key=api_key, model=settings.ACIS_EMBED_MODEL)
     start_uc = StartSession(repo=repo, bus=collecting_bus)
-    extract_uc = ExtractCues(extractor=extractor, repo=repo, bus=collecting_bus)
+    extract_uc = ExtractCues(extractor=extractor, embedder=embedder, repo=repo, bus=collecting_bus)
 
     session = await start_uc.execute(name="Cue smoke test")
     sctx = SessionContext(session=session)

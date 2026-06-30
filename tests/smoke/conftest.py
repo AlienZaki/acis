@@ -109,11 +109,13 @@ def _build_services(api_key: str, db_path: str, bus):
     test gets its own SQLite file.
     """
     from acis.application.use_cases.extract_cues import ExtractCues
+    from acis.application.use_cases.inject_text import InjectText
     from acis.application.use_cases.process_chunk import ProcessChunk
     from acis.application.use_cases.start_session import StartSession
     from acis.application.use_cases.stop_session import StopSession
     from acis.infrastructure.input_interfaces.ws.router import Services
     from acis.infrastructure.output_adapters.asr.voxtral import VoxtralASR
+    from acis.infrastructure.output_adapters.embeddings.mistral import MistralEmbedder
     from acis.infrastructure.output_adapters.llm.cue_extractor import MistralCueExtractor
     from acis.infrastructure.output_adapters.llm.summarizer import MistralSummarizer
     from acis.infrastructure.repositories.sqlite import SQLiteSessionRepository
@@ -122,13 +124,15 @@ def _build_services(api_key: str, db_path: str, bus):
     repo = SQLiteSessionRepository(db_path=db_path)
     asr = VoxtralASR(api_key=api_key, model=settings.ACIS_ASR_MODEL)
     extractor = MistralCueExtractor(api_key=api_key, model=settings.ACIS_CUE_MODEL)
+    embedder = MistralEmbedder(api_key=api_key, model=settings.ACIS_EMBED_MODEL)
     summarizer = MistralSummarizer(api_key=api_key, model=settings.ACIS_SUMMARY_MODEL)
 
     return Services(
         start=StartSession(repo=repo, bus=bus),
         stop=StopSession(repo=repo, summarizer=summarizer, bus=bus),
         process=ProcessChunk(asr=asr, repo=repo, bus=bus),
-        extract=ExtractCues(extractor=extractor, repo=repo, bus=bus),
+        inject=InjectText(repo=repo, bus=bus),
+        extract=ExtractCues(extractor=extractor, embedder=embedder, repo=repo, bus=bus),
         repo=repo,
     )
 

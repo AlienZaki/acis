@@ -46,12 +46,19 @@ class AudioChunk(BaseModel):
     sample_rate: int = 16000
 
 
+class TextLine(BaseModel):
+    """Inject a pre-transcribed text line directly, bypassing ASR (for fixture replay)."""
+
+    type: Literal["text.line"]
+    text: str
+
+
 class Ping(BaseModel):
     type: Literal["ping"]
 
 
 Inbound = Annotated[
-    Hello | SessionStart | SessionStop | AudioChunk | Ping,
+    Hello | SessionStart | SessionStop | AudioChunk | TextLine | Ping,
     Field(discriminator="type"),
 ]
 
