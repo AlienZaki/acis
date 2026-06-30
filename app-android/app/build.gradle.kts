@@ -74,11 +74,13 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.activity)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.okhttp)
     implementation(libs.coroutines.android)
     implementation(libs.serialization.json)
+    implementation(libs.navigation.compose)
     debugImplementation(libs.compose.ui.tooling)
 }

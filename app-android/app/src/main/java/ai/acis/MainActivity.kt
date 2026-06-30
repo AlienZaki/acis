@@ -6,8 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import ai.acis.ui.AcisNavHost
 import ai.acis.ui.AcisTheme
-import ai.acis.ui.SessionScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         requestMic.launch(Manifest.permission.RECORD_AUDIO)
         setContent {
             AcisTheme {
-                SessionScreen(vm = vm)
+                AcisNavHost(vm = vm)
             }
         }
     }
