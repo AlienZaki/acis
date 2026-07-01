@@ -1,7 +1,6 @@
 package ai.acis.ui
 
 import android.content.Intent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -250,14 +249,13 @@ private fun TranscriptionsTab(segments: List<TranscriptSegment>) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CueSection(sec: DetailCueSec, cues: List<Cue>, onCueClick: (Cue) -> Unit) {
-    var expanded by remember { mutableStateOf(true) }
+    var showAll by remember { mutableStateOf(false) }
+    val hasMore = cues.size > CUE_PREVIEW_LIMIT
+    val visible = if (showAll || !hasMore) cues else cues.take(CUE_PREVIEW_LIMIT)
 
     Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }
-                .padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -273,28 +271,26 @@ private fun CueSection(sec: DetailCueSec, cues: List<Cue>, onCueClick: (Cue) -> 
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
             )
-            Spacer(Modifier.width(4.dp))
-            Icon(
-                if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (expanded) "Collapse" else "Expand",
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.outline,
-            )
         }
 
-        if (expanded) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(bottom = 8.dp),
-            ) {
-                cues.forEach { cue ->
-                    InputChip(
-                        selected = false,
-                        onClick = { onCueClick(cue) },
-                        label = { Text(cue.title, style = MaterialTheme.typography.labelMedium) },
-                    )
-                }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
+        ) {
+            visible.forEach { cue ->
+                InputChip(
+                    selected = false,
+                    onClick = { onCueClick(cue) },
+                    label = { Text(cue.title, style = MaterialTheme.typography.labelMedium) },
+                )
+            }
+            if (hasMore) {
+                SeeAllChip(
+                    showAll = showAll,
+                    moreCount = cues.size - CUE_PREVIEW_LIMIT,
+                    onClick = { showAll = !showAll },
+                )
             }
         }
     }

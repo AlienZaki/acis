@@ -35,6 +35,12 @@ data class UiState(
     val summaryActionItems: List<String> = emptyList(),
     val brainUrl: String = BuildConfig.BRAIN_URL,
     val spokenLanguage: String = "auto",
+    val lensPreview: Boolean = false,
+    val voiceInput: String = "glasses",
+    val glassesAiCues: Boolean = true,
+    val glassesLiveTranscription: Boolean = true,
+    val autoPopup: Boolean = true,
+    val cueDuration: String = "auto",
     val history: List<SessionRecord> = emptyList(),
 )
 
@@ -47,6 +53,12 @@ class AcisViewModel(app: Application) : AndroidViewModel(app) {
         UiState(
             brainUrl = settings.brainUrl,
             spokenLanguage = settings.spokenLanguage,
+            lensPreview = settings.lensPreview,
+            voiceInput = settings.voiceInput,
+            glassesAiCues = settings.glassesAiCues,
+            glassesLiveTranscription = settings.glassesLiveTranscription,
+            autoPopup = settings.autoPopup,
+            cueDuration = settings.cueDuration,
             history = historyStore.load(),
         )
     )
@@ -100,6 +112,36 @@ class AcisViewModel(app: Application) : AndroidViewModel(app) {
         _ui.update { it.copy(spokenLanguage = code) }
     }
 
+    fun setLensPreview(enabled: Boolean) {
+        settings.lensPreview = enabled
+        _ui.update { it.copy(lensPreview = enabled) }
+    }
+
+    fun setVoiceInput(source: String) {
+        settings.voiceInput = source
+        _ui.update { it.copy(voiceInput = source) }
+    }
+
+    fun setGlassesAiCues(enabled: Boolean) {
+        settings.glassesAiCues = enabled
+        _ui.update { it.copy(glassesAiCues = enabled) }
+    }
+
+    fun setGlassesLiveTranscription(enabled: Boolean) {
+        settings.glassesLiveTranscription = enabled
+        _ui.update { it.copy(glassesLiveTranscription = enabled) }
+    }
+
+    fun setAutoPopup(enabled: Boolean) {
+        settings.autoPopup = enabled
+        _ui.update { it.copy(autoPopup = enabled) }
+    }
+
+    fun setCueDuration(value: String) {
+        settings.cueDuration = value
+        _ui.update { it.copy(cueDuration = value) }
+    }
+
     fun reconnectWithNewUrl() {
         if (client != null) connect()
     }
@@ -107,6 +149,12 @@ class AcisViewModel(app: Application) : AndroidViewModel(app) {
     fun clearHistory() {
         historyStore.clear()
         _ui.update { it.copy(history = emptyList()) }
+    }
+
+    fun deleteSessions(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        historyStore.delete(ids)
+        _ui.update { it.copy(history = historyStore.load()) }
     }
 
     override fun onCleared() {

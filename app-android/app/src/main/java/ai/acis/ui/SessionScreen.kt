@@ -1,7 +1,6 @@
 package ai.acis.ui
 
 import android.content.Intent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -19,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ai.acis.AcisViewModel
 import ai.acis.Cue
+
+/** How many cue chips a section shows before a "See all" reveals the rest. */
+internal const val CUE_PREVIEW_LIMIT = 4
 
 private data class CueSectionDef(val type: String, val label: String, val icon: ImageVector)
 
@@ -71,18 +73,35 @@ fun SessionScreen(vm: AcisViewModel, outerPadding: PaddingValues = PaddingValues
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(ui.status, style = MaterialTheme.typography.labelMedium)
+                    Spacer(Modifier.weight(1f))
                     if (ui.listening) {
-                        Spacer(Modifier.weight(1f))
                         Text(
                             "● REC",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.labelSmall,
                         )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    IconToggleButton(
+                        checked = ui.lensPreview,
+                        onCheckedChange = { vm.setLensPreview(it) },
+                        modifier = Modifier.size(28.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Visibility,
+                            contentDescription = "Toggle in-lens preview",
+                            tint = if (ui.lensPreview) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
             }
 
-            // Scrollable content
+            // Scrollable content — or the in-lens HUD simulation when toggled on.
+            if (ui.lensPreview) {
+                LensSimulationView(ui, modifier = Modifier.weight(1f))
+            } else {
             LazyColumn(modifier = Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 8.dp)) {
 
                 if (ui.transcript.isNotBlank()) {
@@ -162,6 +181,7 @@ fun SessionScreen(vm: AcisViewModel, outerPadding: PaddingValues = PaddingValues
 
                 item { Spacer(Modifier.height(16.dp)) }
             }
+            }
 
             // Bottom controls
             Surface(shadowElevation = 8.dp) {
@@ -192,14 +212,13 @@ fun SessionScreen(vm: AcisViewModel, outerPadding: PaddingValues = PaddingValues
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LiveCueSection(sec: CueSectionDef, cues: List<Cue>, onCueClick: (Cue) -> Unit) {
-    var expanded by remember { mutableStateOf(true) }
+    var showAll by remember { mutableStateOf(false) }
+    val hasMore = cues.size > CUE_PREVIEW_LIMIT
+    val visible = if (showAll || !hasMore) cues else cues.take(CUE_PREVIEW_LIMIT)
 
     Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }
-                .padding(vertical = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -220,31 +239,51 @@ private fun LiveCueSection(sec: CueSectionDef, cues: List<Cue>, onCueClick: (Cue
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
             )
-            Spacer(Modifier.width(4.dp))
-            Icon(
-                if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (expanded) "Collapse" else "Expand",
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.outline,
-            )
         }
 
-        if (expanded) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(bottom = 8.dp),
-            ) {
-                cues.forEach { cue ->
-                    InputChip(
-                        selected = false,
-                        onClick = { onCueClick(cue) },
-                        label = { Text(cue.title, style = MaterialTheme.typography.labelSmall) },
-                    )
-                }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
+        ) {
+            visible.forEach { cue ->
+                InputChip(
+                    selected = false,
+                    onClick = { onCueClick(cue) },
+                    label = { Text(cue.title, style = MaterialTheme.typography.labelSmall) },
+                )
+            }
+            if (hasMore) {
+                SeeAllChip(
+                    showAll = showAll,
+                    moreCount = cues.size - CUE_PREVIEW_LIMIT,
+                    onClick = { showAll = !showAll },
+                )
             }
         }
     }
+}
+
+/** Progressive-disclosure chip: collapses a long cue list to a sample. */
+@Composable
+internal fun SeeAllChip(showAll: Boolean, moreCount: Int, onClick: () -> Unit) {
+    InputChip(
+        selected = false,
+        onClick = onClick,
+        label = {
+            Text(
+                if (showAll) "Show less" else "See all ($moreCount)",
+                style = MaterialTheme.typography.labelSmall,
+            )
+        },
+        leadingIcon = {
+            Icon(
+                if (showAll) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+            )
+        },
+    )
 }
 
 @Composable

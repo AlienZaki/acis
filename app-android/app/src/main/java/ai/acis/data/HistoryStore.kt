@@ -24,5 +24,11 @@ class HistoryStore(context: Context) {
         prefs.edit().putString(KEY, Json.encodeToString(list)).apply()
     }
 
+    /** Remove the sessions whose ids are in [ids]; keeps the rest in order. */
+    fun delete(ids: Set<String>) {
+        val list = load().filterNot { it.sessionId in ids }
+        prefs.edit().putString(KEY, Json.encodeToString(list)).apply()
+    }
+
     fun clear() = prefs.edit().remove(KEY).apply()
 }
